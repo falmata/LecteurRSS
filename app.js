@@ -8,7 +8,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
 var indexRouter = require('./routes/index');
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || 5000;
 
 
 var app = express();
