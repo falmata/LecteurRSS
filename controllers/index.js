@@ -1,12 +1,15 @@
 const mongoose = require("mongoose");
-const uri = "mongodb+srv://feedUser:Feed2021@cluster0.ljjv5.mongodb.net/feed?retryWrites=true&w=majority";
-mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
+let path = require('path');
+global.SERVER_ROOT_PATH = path.resolve(__dirname);
+let parameters = require(SERVER_ROOT_PATH + '/../config/config');
+const Feed = require('../models/feeds');
+const formatxmltojson = require('../services/index')
+let dbParams = parameters.db;
+var urlfeed = 'https://www.lemonde.fr/rss/en_continu.xml';
 
-}, err => {
+//db Connection
+mongoose.connect(dbParams.url, dbParams.options, err => {
     if(err) throw err;
-    console.log('Connected to MongoDB!!!')
 });
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error: "));
@@ -14,38 +17,10 @@ db.once("open", function () {
     console.log("Connected successfully");
 });
 
-var parseString = require('xml2js').parseString;
-var https = require('https');
-const Feed = require("../models/feeds");
-var urlfeed = 'https://www.lemonde.fr/rss/en_continu.xml';
-
-async function xmlToJson(url, callback) {
-    var req = https.get(url, function(res) {
-        var xml = '';
-
-        res.on('data', function(chunk) {
-            xml += chunk;
-        });
-
-        res.on('error', function(e) {
-            callback(e, null);
-        });
-
-        res.on('timeout', function(e) {
-            callback(e, null);
-        });
-
-        res.on('end', function() {
-            parseString(xml, function(err, result) {
-                callback(null, result);
-            });
-        });
-    });
-}
 
 async function getItems(req,res) {
     var feedsarray=[];
-    await xmlToJson(urlfeed, async function (err, data) {
+    await formatxmltojson.xmlToJson(urlfeed, async function (err, data) {
         data.rss.channel[0].item.forEach(element => {
             let item={
                 "title": element.title[0],
@@ -68,7 +43,7 @@ async function getItems(req,res) {
 
 async function getFeed (req,res){
     let feed={};
-    await xmlToJson(urlfeed, async function (err, data) {
+    await formatxmltojson.xmlToJson(urlfeed, async function (err, data) {
         feed = {
             "title": data.rss.channel[0].title[0],
             "description": data.rss.channel[0].description[0],
